@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import HelpModal from '@/components/HelpModal'
 
 export const metadata: Metadata = {
   title: 'Quiz Night',
@@ -13,7 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <HelpModal />
+      </body>
     </html>
   )
 }
+
