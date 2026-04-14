@@ -20,7 +20,8 @@ export async function POST(req: Request) {
     }
 
     // 1. Fetch questions from OpenTDB
-    let url = `https://opentdb.com/api.php?amount=10&type=multiple`;
+    // Fetch more than needed to ensure we can filter out duplicates
+    let url = `https://opentdb.com/api.php?amount=50&type=multiple`;
     if (category && category !== 'any') {
       url += `&category=${category}`;
     }
@@ -35,8 +36,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Could not fetch questions from Trivia Database.' }, { status: 500 });
     }
 
+    // Deduplicate questions to ensure no duplicates in the 10 rounds
+    const uniqueQuestionsMap = new Map();
+    for (const q of tdbData.results) {
+      if (!uniqueQuestionsMap.has(q.question)) {
+        uniqueQuestionsMap.set(q.question, q);
+      }
+    }
+    const uniqueQuestions = Array.from(uniqueQuestionsMap.values()).slice(0, 10);
+
+    if (uniqueQuestions.length === 0) {
+      return NextResponse.json({ error: 'Not enough unique questions found.' }, { status: 500 });
+    }
+
     // Format questions to include decoded text and shuffled options
-    const questions = tdbData.results.map((q: any) => {
+    const questions = uniqueQuestions.map((q: any) => {
       const options = [...q.incorrect_answers, q.correct_answer].sort(() => Math.random() - 0.5);
       return {
         question: q.question,
