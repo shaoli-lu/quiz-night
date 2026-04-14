@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { HelpCircle, X, Info, Users, Sparkles, Trophy } from 'lucide-react';
+import { HelpCircle, X, Info, Users, Sparkles, Trophy, BarChart3, CalendarDays } from 'lucide-react';
 
 export default function HelpModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -96,7 +96,7 @@ export default function HelpModal() {
               How to Play
             </h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
               <div style={{ display: 'flex', gap: '16px' }}>
                 <div style={{ background: 'rgba(109, 40, 217, 0.2)', padding: '10px', borderRadius: '12px', height: 'fit-content' }}>
                   <Users size={24} color="var(--primary-glow)" />
@@ -129,6 +129,30 @@ export default function HelpModal() {
                   <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Score Big</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.4' }}>
                     Answer questions as fast as possible! Quick answers earn more points and put you on top of the leaderboard.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ background: 'rgba(16, 185, 129, 0.2)', padding: '10px', borderRadius: '12px', height: 'fit-content' }}>
+                  <BarChart3 size={24} color="#10b981" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Track Stats</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                    Check the <strong>Stats</strong> tab to see your overall Wins, Losses, and Draws globally. Tap "Reset Stats" anytime to wipe the board clean.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '10px', borderRadius: '12px', height: 'fit-content' }}>
+                  <CalendarDays size={24} color="#3b82f6" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Review History</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                    Dive into the <strong>History</strong> tab to review past matches, see who played, and expand the details to see exactly who won.
                   </p>
                 </div>
               </div>
