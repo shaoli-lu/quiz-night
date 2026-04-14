@@ -4,7 +4,7 @@ import HelpModal from '@/components/HelpModal'
 
 export const metadata: Metadata = {
   title: 'Quiz Night',
-  description: 'A responsive, modern Next.js trivia app',
+  description: 'A responsive, modern trivia app',
 }
 
 export default function RootLayout({

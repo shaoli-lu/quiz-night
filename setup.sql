@@ -23,13 +23,52 @@ CREATE TABLE IF NOT EXISTS players (
     answers JSONB DEFAULT '[]'::jsonb
 );
 
--- Enable RLS (we will allow all for this demo, or just use anon key with public access)
+-- Note: We add saved_games and saved_players for game history
+CREATE TABLE IF NOT EXISTS saved_games (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  room_code text,
+  rounds integer,
+  played_at timestamp with time zone DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE IF NOT EXISTS saved_players (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  game_id uuid REFERENCES saved_games(id) ON DELETE CASCADE,
+  player_name text,
+  score integer,
+  is_winner boolean,
+  is_draw boolean
+);
+
+CREATE OR REPLACE VIEW scoreboard AS
+SELECT 
+  player_name as name,
+  COUNT(CASE WHEN is_winner = true AND is_draw = false THEN 1 END) as wins,
+  COUNT(CASE WHEN is_winner = false THEN 1 END) as losses,
+  COUNT(CASE WHEN is_winner = true AND is_draw = true THEN 1 END) as draws,
+  MAX(score) as best_score
+FROM saved_players
+GROUP BY player_name
+ORDER BY wins DESC, draws DESC, losses ASC;
+
+-- Enable RLS
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_games ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_players ENABLE ROW LEVEL SECURITY;
 
--- Create policies to allow public access (since user isn't using strict Auth)
+-- Idempotent Policies
+DROP POLICY IF EXISTS "Allow public read/write on rooms" ON rooms;
 CREATE POLICY "Allow public read/write on rooms" ON rooms FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public read/write on players" ON players;
 CREATE POLICY "Allow public read/write on players" ON players FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public read/write on saved_games" ON saved_games;
+CREATE POLICY "Allow public read/write on saved_games" ON saved_games FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public read/write on saved_players" ON saved_players;
+CREATE POLICY "Allow public read/write on saved_players" ON saved_players FOR ALL USING (true) WITH CHECK (true);
 
 -- Enable Realtime for rooms and players
 DO $$ 
@@ -39,4 +78,6 @@ BEGIN
   ELSE
     ALTER PUBLICATION supabase_realtime ADD TABLE rooms, players;
   END IF;
+  EXCEPTION WHEN duplicate_object THEN
+    NULL;
 END $$;

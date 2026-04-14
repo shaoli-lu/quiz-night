@@ -69,6 +69,20 @@ export default function RoomClient({ code }: RoomClientProps) {
         const nextQ = setTimeout(async () => {
           if (room.current_question + 1 >= room.questions.length) {
             await supabase.from('rooms').update({ status: 'finished' }).eq('code', code);
+            // Save game details for history & scoreboard
+            try {
+              await fetch('/api/save-game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  roomCode: code,
+                  rounds: room.questions.length,
+                  players: players.map(p => ({ name: p.name, score: p.score }))
+                })
+              });
+            } catch (err) {
+              console.error("Failed to save game history", err);
+            }
           } else {
             await supabase.from('rooms').update({ current_question: room.current_question + 1 }).eq('code', code);
           }

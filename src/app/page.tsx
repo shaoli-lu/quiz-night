@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Sparkles, Users, UserPlus } from 'lucide-react';
+import { Sparkles, Users, UserPlus, Trophy, CalendarDays, Gamepad2 } from 'lucide-react';
+import ScoreboardTab from '@/components/ScoreboardTab';
+import HistoryTab from '@/components/HistoryTab';
 
 export default function Home() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'play' | 'scoreboard' | 'history'>('play');
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -126,85 +129,113 @@ export default function Home() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'rgba(0,0,0,0.2)', padding: '5px', borderRadius: 'var(--radius)' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px' }}>
           <button 
-            style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: !isCreating ? 'var(--surface)' : 'transparent', color: !isCreating ? 'white' : 'var(--text-muted)' }}
-            onClick={() => setIsCreating(false)}
+            style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: activeTab === 'play' ? 'var(--accent)' : 'transparent', color: activeTab === 'play' ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}
+            onClick={() => setActiveTab('play')}
           >
-            Join Room
+            <Gamepad2 size={18} /> Play
           </button>
           <button 
-            style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: isCreating ? 'var(--surface)' : 'transparent', color: isCreating ? 'white' : 'var(--text-muted)' }}
-            onClick={() => setIsCreating(true)}
+            style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: activeTab === 'scoreboard' ? 'var(--accent)' : 'transparent', color: activeTab === 'scoreboard' ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}
+            onClick={() => setActiveTab('scoreboard')}
           >
-            Create Room
+            <Trophy size={18} /> Stats
+          </button>
+          <button 
+            style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: activeTab === 'history' ? 'var(--accent)' : 'transparent', color: activeTab === 'history' ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}
+            onClick={() => setActiveTab('history')}
+          >
+            <CalendarDays size={18} /> History
           </button>
         </div>
 
-        <form onSubmit={isCreating ? handleCreate : handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <input 
-            type="text" 
-            placeholder="Your Nickname" 
-            className="input-field"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            maxLength={15}
-            required
-          />
-          
-          {!isCreating && (
-            <input 
-              type="text" 
-              placeholder="4-Letter Room Code" 
-              className="input-field"
-              value={roomCode}
-              onChange={e => setRoomCode(e.target.value.toUpperCase())}
-              maxLength={4}
-              required
-            />
-          )}
-
-          {isCreating && (
-            <>
-              <select 
-                className="input-field" 
-                value={selectedCategory} 
-                onChange={e => setSelectedCategory(e.target.value)}
+        {activeTab === 'play' && (
+          <>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'rgba(0,0,0,0.2)', padding: '5px', borderRadius: 'var(--radius)' }}>
+              <button 
+                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: !isCreating ? 'var(--surface)' : 'transparent', color: !isCreating ? 'white' : 'var(--text-muted)' }}
+                onClick={() => setIsCreating(false)}
               >
-                <option value="any">Any Category</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-
-              <select 
-                className="input-field" 
-                value={difficulty} 
-                onChange={e => setDifficulty(e.target.value)}
+                Join Room
+              </button>
+              <button 
+                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: isCreating ? 'var(--surface)' : 'transparent', color: isCreating ? 'white' : 'var(--text-muted)' }}
+                onClick={() => setIsCreating(true)}
               >
-                <option value="any">Any Difficulty</option>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </>
-          )}
+                Create Room
+              </button>
+            </div>
 
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            disabled={loading}
-            style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '10px' }}
-          >
-            {loading ? (
-              <div className="loader"></div>
-            ) : isCreating ? (
-              <><UserPlus size={20} /> Create New Game</>
-            ) : (
-              <><Users size={20} /> Join Game</>
-            )}
-          </button>
-        </form>
+            <form onSubmit={isCreating ? handleCreate : handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <input 
+                type="text" 
+                placeholder="Your Nickname" 
+                className="input-field"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                maxLength={15}
+                required
+              />
+              
+              {!isCreating && (
+                <input 
+                  type="text" 
+                  placeholder="4-Letter Room Code" 
+                  className="input-field"
+                  value={roomCode}
+                  onChange={e => setRoomCode(e.target.value.toUpperCase())}
+                  maxLength={4}
+                  required
+                />
+              )}
+
+              {isCreating && (
+                <>
+                  <select 
+                    className="input-field" 
+                    value={selectedCategory} 
+                    onChange={e => setSelectedCategory(e.target.value)}
+                  >
+                    <option value="any">Any Category</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+
+                  <select 
+                    className="input-field" 
+                    value={difficulty} 
+                    onChange={e => setDifficulty(e.target.value)}
+                  >
+                    <option value="any">Any Difficulty</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </>
+              )}
+
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={loading}
+                style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '10px' }}
+              >
+                {loading ? (
+                  <div className="loader"></div>
+                ) : isCreating ? (
+                  <><UserPlus size={20} /> Create New Game</>
+                ) : (
+                  <><Users size={20} /> Join Game</>
+                )}
+              </button>
+            </form>
+          </>
+        )}
+
+        {activeTab === 'scoreboard' && <ScoreboardTab />}
+        {activeTab === 'history' && <HistoryTab />}
       </div>
     </main>
   );
