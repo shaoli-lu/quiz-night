@@ -21,14 +21,25 @@ export default function Home() {
   const [difficulty, setDifficulty] = useState('any');
 
   useEffect(() => {
-    fetch('https://opentdb.com/api_category.php')
-      .then(res => res.json())
-      .then(data => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('https://opentdb.com/api_category.php');
+        if (!res.ok) throw new Error('API down');
+        const data = await res.json();
         if (data.trivia_categories) {
           setCategories(data.trivia_categories);
+          return;
         }
-      })
-      .catch(console.error);
+        throw new Error('No categories returned');
+      } catch (err) {
+        console.warn('OpenTDB failed, falling back to Supabase categories', err);
+        const { data, error } = await supabase.from('categories').select('*');
+        if (data && !error) {
+          setCategories(data);
+        }
+      }
+    };
+    fetchCategories();
   }, []);
 
   const handleJoin = async (e: React.FormEvent) => {

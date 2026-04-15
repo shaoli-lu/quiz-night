@@ -19,26 +19,67 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    // 1. Fetch questions from OpenTDB
-    // Fetch more than needed to ensure we can filter out duplicates
-    let url = `https://opentdb.com/api.php?amount=50&type=multiple`;
-    if (category && category !== 'any') {
-      url += `&category=${category}`;
-    }
-    if (difficulty && difficulty !== 'any') {
-      url += `&difficulty=${difficulty}`;
-    }
+    let results: any[] = [];
+    try {
+      // 1. Fetch questions from OpenTDB
+      // Fetch more than needed to ensure we can filter out duplicates
+      let url = `https://opentdb.com/api.php?amount=50&type=multiple`;
+      if (category && category !== 'any') {
+        url += `&category=${category}`;
+      }
+      if (difficulty && difficulty !== 'any') {
+        url += `&difficulty=${difficulty}`;
+      }
 
-    const tdbRes = await fetch(url);
-    const tdbData = await tdbRes.json();
+      const tdbRes = await fetch(url);
+      if (!tdbRes.ok) throw new Error('OpenTDB fetch failed');
+      const tdbData = await tdbRes.json();
 
-    if (tdbData.response_code !== 0 || !tdbData.results.length) {
-      return NextResponse.json({ error: 'Could not fetch questions from Trivia Database.' }, { status: 500 });
+      if (tdbData.response_code !== 0 || !tdbData.results.length) {
+        throw new Error('No results from OpenTDB');
+      }
+      results = tdbData.results;
+    } catch (err) {
+      console.warn('OpenTDB fetch failed, falling back to Supabase questions', err);
+      // Fallback to Supabase `questions` table
+      let query = supabase.from('questions').select('*');
+      if (category && category !== 'any') {
+        query = query.eq('category', category.toString());
+      }
+      if (difficulty && difficulty !== 'any') {
+        query = query.eq('difficulty', difficulty);
+      }
+      
+      let { data, error } = await query.limit(50);
+
+      // If we don't have enough specific matches, loosen criteria
+      if (error || !data || data.length < 10) {
+        console.warn('Not enough specific fallback questions, loosening criteria...');
+        let looseQuery = supabase.from('questions').select('*');
+        if (category && category !== 'any') {
+          looseQuery = looseQuery.eq('category', category.toString());
+        }
+        const { data: looseData } = await looseQuery.limit(50);
+
+        if (!looseData || looseData.length < 10) {
+           // Fetch any questions if even that fails
+           const { data: anyData } = await supabase.from('questions').select('*').limit(50);
+           data = anyData || [];
+        } else {
+           data = looseData;
+        }
+      }
+
+      if (!data || data.length === 0) {
+         console.error('Fallback query results were empty or there was an error.', error);
+         return NextResponse.json({ error: 'Could not fetch questions from Trivia Database or Fallback.' }, { status: 500 });
+      }
+      results = data;
     }
 
     // Deduplicate questions to ensure no duplicates in the 10 rounds
     const uniqueQuestionsMap = new Map();
-    for (const q of tdbData.results) {
+    for (const q of results) {
       if (!uniqueQuestionsMap.has(q.question)) {
         uniqueQuestionsMap.set(q.question, q);
       }
