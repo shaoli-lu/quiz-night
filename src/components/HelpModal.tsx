@@ -165,6 +165,10 @@ export default function HelpModal() {
             >
               Got it!
             </button>
+
+            <div style={{ textAlign: 'center', marginTop: '20px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              Made with ❤️ and ☕
+            </div>
           </div>
         </div>
       )}
