@@ -16,7 +16,7 @@ export default function HelpModal() {
   return (
     <>
       {/* Floating Action Button */}
-      <button 
+      <button
         onClick={() => setIsOpen(true)}
         style={{
           position: 'fixed',
@@ -44,7 +44,7 @@ export default function HelpModal() {
 
       {/* Modal Overlay */}
       {isOpen && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             top: 0,
@@ -63,7 +63,7 @@ export default function HelpModal() {
           onClick={() => setIsOpen(false)}
         >
           {/* Modal Content */}
-          <div 
+          <div
             style={{
               maxWidth: '500px',
               width: '100%',
@@ -78,7 +78,7 @@ export default function HelpModal() {
             onClick={e => e.stopPropagation()}
             className="animate-fade-in"
           >
-            <button 
+            <button
               onClick={() => setIsOpen(false)}
               style={{
                 position: 'absolute',
@@ -104,7 +104,7 @@ export default function HelpModal() {
                 <div>
                   <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Join or Create</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.4' }}>
-                    Enter your nickname and a 4-letter room code to join friends, or create a new room to host your own game.
+                    Enter your name or team name and a 4-letter room code to join friends, or create a new room to host your own game.
                   </p>
                 </div>
               </div>
@@ -158,8 +158,8 @@ export default function HelpModal() {
               </div>
             </div>
 
-            <button 
-              className="btn-primary" 
+            <button
+              className="btn-primary"
               style={{ width: '100%', marginTop: '32px' }}
               onClick={() => setIsOpen(false)}
             >

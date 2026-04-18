@@ -15,8 +15,8 @@ export default function Home() {
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+
+  const [categories, setCategories] = useState<{ id: string, name: string }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('any');
   const [difficulty, setDifficulty] = useState('any');
 
@@ -48,10 +48,10 @@ export default function Home() {
       setError('Name and Room Code are required.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       const code = roomCode.toUpperCase();
       // Check if room exists
@@ -60,28 +60,28 @@ export default function Home() {
         .select('code, status')
         .eq('code', code)
         .single();
-        
+
       if (roomError || !room) {
         throw new Error('Room not found! Check the code and try again.');
       }
-      
+
       if (room.status !== 'waiting') {
         throw new Error('Game has already started or finished.');
       }
-      
+
       // Join room
       const { data: player, error: playerError } = await supabase
         .from('players')
         .insert({ room_code: code, name: name.trim() })
         .select('*')
         .single();
-        
+
       if (playerError) throw playerError;
 
       // Save playerId in localStorage
       localStorage.setItem('quizPlayerId', player.id);
       localStorage.setItem('quizPlayerName', player.name);
-      
+
       router.push(`/room/${code}`);
     } catch (err: any) {
       setError(err.message || 'Failed to join room');
@@ -95,10 +95,10 @@ export default function Home() {
       setError('Please enter your name first.');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       const res = await fetch('/api/create-room', {
         method: 'POST',
@@ -109,13 +109,13 @@ export default function Home() {
           difficulty
         })
       });
-      
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      
+
       localStorage.setItem('quizPlayerId', data.playerId);
       localStorage.setItem('quizPlayerName', name.trim());
-      
+
       router.push(`/room/${data.roomCode}`);
     } catch (err: any) {
       setError(err.message || 'Failed to create room');
@@ -133,7 +133,7 @@ export default function Home() {
         <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', fontSize: '1.2rem' }}>
           Real-time multiplayer trivia challenge
         </p>
-        
+
         {error && (
           <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: 'var(--error)', padding: '12px', borderRadius: 'var(--radius)', marginBottom: '20px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
             {error}
@@ -141,19 +141,19 @@ export default function Home() {
         )}
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px' }}>
-          <button 
+          <button
             style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: activeTab === 'play' ? 'var(--accent)' : 'transparent', color: activeTab === 'play' ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}
             onClick={() => setActiveTab('play')}
           >
             <Gamepad2 size={18} /> Play
           </button>
-          <button 
+          <button
             style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: activeTab === 'scoreboard' ? 'var(--accent)' : 'transparent', color: activeTab === 'scoreboard' ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}
             onClick={() => setActiveTab('scoreboard')}
           >
             <Trophy size={18} /> Stats
           </button>
-          <button 
+          <button
             style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: activeTab === 'history' ? 'var(--accent)' : 'transparent', color: activeTab === 'history' ? 'white' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}
             onClick={() => setActiveTab('history')}
           >
@@ -164,13 +164,13 @@ export default function Home() {
         {activeTab === 'play' && (
           <>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: 'rgba(0,0,0,0.2)', padding: '5px', borderRadius: 'var(--radius)' }}>
-              <button 
+              <button
                 style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: !isCreating ? 'var(--surface)' : 'transparent', color: !isCreating ? 'white' : 'var(--text-muted)' }}
                 onClick={() => setIsCreating(false)}
               >
                 Join Room
               </button>
-              <button 
+              <button
                 style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', background: isCreating ? 'var(--surface)' : 'transparent', color: isCreating ? 'white' : 'var(--text-muted)' }}
                 onClick={() => setIsCreating(true)}
               >
@@ -179,20 +179,20 @@ export default function Home() {
             </div>
 
             <form onSubmit={isCreating ? handleCreate : handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <input 
-                type="text" 
-                placeholder="Your Nickname" 
+              <input
+                type="text"
+                placeholder="Your Name/Team Name"
                 className="input-field"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 maxLength={15}
                 required
               />
-              
+
               {!isCreating && (
-                <input 
-                  type="text" 
-                  placeholder="4-Letter Room Code" 
+                <input
+                  type="text"
+                  placeholder="4-Letter Room Code"
                   className="input-field"
                   value={roomCode}
                   onChange={e => setRoomCode(e.target.value.toUpperCase())}
@@ -203,9 +203,9 @@ export default function Home() {
 
               {isCreating && (
                 <>
-                  <select 
-                    className="input-field" 
-                    value={selectedCategory} 
+                  <select
+                    className="input-field"
+                    value={selectedCategory}
                     onChange={e => setSelectedCategory(e.target.value)}
                   >
                     <option value="any">Any Category</option>
@@ -214,9 +214,9 @@ export default function Home() {
                     ))}
                   </select>
 
-                  <select 
-                    className="input-field" 
-                    value={difficulty} 
+                  <select
+                    className="input-field"
+                    value={difficulty}
                     onChange={e => setDifficulty(e.target.value)}
                   >
                     <option value="any">Any Difficulty</option>
@@ -227,9 +227,9 @@ export default function Home() {
                 </>
               )}
 
-              <button 
-                type="submit" 
-                className="btn-primary" 
+              <button
+                type="submit"
+                className="btn-primary"
                 disabled={loading}
                 style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '10px' }}
               >
