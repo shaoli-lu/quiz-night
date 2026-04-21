@@ -65,18 +65,34 @@ export default function Home() {
         throw new Error('Room not found! Check the code and try again.');
       }
 
-      if (room.status !== 'waiting') {
-        throw new Error('Game has already started or finished.');
-      }
-
-      // Join room
-      const { data: player, error: playerError } = await supabase
+      // Try to find existing player with this name in this room
+      const { data: existingPlayer } = await supabase
         .from('players')
-        .insert({ room_code: code, name: name.trim() })
         .select('*')
-        .single();
+        .eq('room_code', code)
+        .eq('name', name.trim())
+        .maybeSingle();
 
-      if (playerError) throw playerError;
+      let player;
+      if (existingPlayer) {
+        // Rejoin existing player
+        player = existingPlayer;
+      } else {
+        // New player joining - check if room is still waiting
+        if (room.status !== 'waiting') {
+          throw new Error('Game has already started or finished.');
+        }
+
+        // Join as new player
+        const { data: newPlayer, error: playerError } = await supabase
+          .from('players')
+          .insert({ room_code: code, name: name.trim() })
+          .select('*')
+          .single();
+        
+        if (playerError) throw playerError;
+        player = newPlayer;
+      }
 
       // Save playerId in localStorage
       localStorage.setItem('quizPlayerId', player.id);

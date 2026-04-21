@@ -132,9 +132,17 @@ export default function RoomClient({ code }: RoomClientProps) {
 
   const handleStartGame = async () => {
     if (!room || room.questions.length === 0) return;
+    
+    // If I'm not the host, make me the host so I can drive the game
+    if (!isHost) {
+      await supabase.from('players').update({ is_host: true }).eq('id', playerId);
+      await supabase.from('players').update({ is_host: false }).eq('room_code', code).neq('id', playerId);
+    }
+
     await supabase.from('rooms').update({
       status: 'playing',
-      current_question: 0
+      current_question: 0,
+      started_at: new Date().toISOString()
     }).eq('code', code);
   };
 
@@ -185,13 +193,9 @@ export default function RoomClient({ code }: RoomClientProps) {
             ))}
           </div>
 
-          {isHost ? (
-            <button className="btn-primary" onClick={handleStartGame} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', fontSize: '1.2rem', padding: '15px' }}>
-              <Play fill="white" /> Start Game
-            </button>
-          ) : (
-            <p style={{ color: 'var(--text-muted)' }}>Waiting for host to start...</p>
-          )}
+          <button className="btn-primary" onClick={handleStartGame} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', fontSize: '1.2rem', padding: '15px' }}>
+            <Play fill="white" /> Start Game
+          </button>
         </div>
       )}
 
