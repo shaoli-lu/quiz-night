@@ -20,8 +20,10 @@ CREATE TABLE IF NOT EXISTS players (
     score INT DEFAULT 0,
     is_host BOOLEAN DEFAULT FALSE,
     joined_at TIMESTAMPTZ DEFAULT NOW(),
-    answers JSONB DEFAULT '[]'::jsonb
+    answers JSONB DEFAULT '[]'::jsonb,
+    UNIQUE(room_code, name)
 );
+ALTER TABLE players REPLICA IDENTITY FULL;
 
 -- Note: We add saved_games and saved_players for game history
 CREATE TABLE IF NOT EXISTS saved_games (

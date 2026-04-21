@@ -75,7 +75,7 @@ export default function Home() {
 
       let player;
       if (existingPlayer) {
-        // Rejoin existing player
+        // Rejoin existing player by name (allows rejoining from new sessions)
         player = existingPlayer;
       } else {
         // New player joining - check if room is still waiting

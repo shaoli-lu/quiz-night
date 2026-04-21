@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Crown, Play, CheckCircle2, XCircle, Trophy, Home, Users } from 'lucide-react';
+import { Crown, Play, CheckCircle2, XCircle, Trophy, Home, Users, Pencil, UserMinus, Save, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface RoomClientProps {
@@ -22,6 +22,9 @@ export default function RoomClient({ code }: RoomClientProps) {
   const [isRevealed, setIsRevealed] = useState(false);
   const [gameOverConfetti, setGameOverConfetti] = useState(false);
 
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+
   useEffect(() => {
     // Client-side local storage init
     const id = localStorage.getItem('quizPlayerId');
@@ -38,7 +41,22 @@ export default function RoomClient({ code }: RoomClientProps) {
       const { data: r } = await supabase.from('rooms').select('*').eq('code', code).single();
       const { data: p } = await supabase.from('players').select('*').eq('room_code', code);
       if (r) setRoom(r);
-      if (p) setPlayers(p.sort((a,b) => b.score - a.score));
+      if (p) {
+        setPlayers(p.sort((a,b) => b.score - a.score));
+        
+        // If I'm not in the player list anymore, I was removed
+        const me = p.find(player => player.id === id);
+        if (!me) {
+          router.push('/');
+          return;
+        }
+
+        // If my name in the DB doesn't match my local name, I was renamed
+        if (me.name !== localStorage.getItem('quizPlayerName')) {
+          setPlayerName(me.name);
+          localStorage.setItem('quizPlayerName', me.name);
+        }
+      }
     };
 
     fetchState();
@@ -47,6 +65,7 @@ export default function RoomClient({ code }: RoomClientProps) {
     const roomSub = supabase.channel(`room:${code}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `code=eq.${code}` }, payload => {
         setRoom(payload.new);
+        fetchState();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_code=eq.${code}` }, payload => {
         fetchState();
@@ -163,6 +182,22 @@ export default function RoomClient({ code }: RoomClientProps) {
     }
   };
 
+  const handleRename = async (id: string) => {
+    if (!editName.trim()) return;
+    await supabase.from('players').update({ name: editName.trim() }).eq('id', id);
+    // Touch room to trigger refresh for everyone
+    await supabase.from('rooms').update({ updated_at: new Date().toISOString() }).eq('code', code);
+    setEditingPlayerId(null);
+    setEditName('');
+  };
+
+  const handleRemove = async (idOfPlayer: string) => {
+    if (!confirm('Are you sure you want to remove this player?')) return;
+    await supabase.from('players').delete().eq('id', idOfPlayer);
+    // Touch room to trigger refresh for everyone
+    await supabase.from('rooms').update({ updated_at: new Date().toISOString() }).eq('code', code);
+  };
+
   if (!room) {
     return <div className="container animate-fade-in"><div className="loader" style={{margin: 'auto'}}></div></div>;
   }
@@ -187,8 +222,45 @@ export default function RoomClient({ code }: RoomClientProps) {
           <div style={{ display: 'grid', gap: '10px', marginBottom: '2rem' }}>
             {players.map(p => (
               <div key={p.id} style={{ background: 'var(--surface)', padding: '12px 20px', borderRadius: 'var(--radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{p.name} {p.id === playerId && '(You)'}</span>
-                {p.is_host && <Crown size={20} color="var(--accent)" />}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                  {editingPlayerId === p.id ? (
+                    <div style={{ display: 'flex', gap: '5px', width: '100%' }}>
+                      <input 
+                        className="input-field" 
+                        style={{ padding: '5px 10px', margin: 0, height: 'auto' }} 
+                        value={editName} 
+                        onChange={e => setEditName(e.target.value)}
+                        autoFocus
+                      />
+                      <button className="btn-secondary" style={{ padding: '5px' }} onClick={() => handleRename(p.id)}><Save size={16} /></button>
+                      <button className="btn-secondary" style={{ padding: '5px' }} onClick={() => setEditingPlayerId(null)}><X size={16} /></button>
+                    </div>
+                  ) : (
+                    <>
+                      <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{p.name} {p.id === playerId && '(You)'}</span>
+                      {p.is_host && <Crown size={20} color="var(--accent)" />}
+                    </>
+                  )}
+                </div>
+                
+                {isHost && p.id !== playerId && !editingPlayerId && (
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                      onClick={() => { setEditingPlayerId(p.id); setEditName(p.name); }}
+                      title="Rename Player"
+                    >
+                      <Pencil size={18} />
+                    </button>
+                    <button 
+                      style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer' }}
+                      onClick={() => handleRemove(p.id)}
+                      title="Remove Player"
+                    >
+                      <UserMinus size={18} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
