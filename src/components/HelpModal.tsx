@@ -104,7 +104,7 @@ export default function HelpModal() {
                 <div>
                   <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Join or Create</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.4' }}>
-                    Enter your name or team name and a 4-letter room code to join friends, or create a new room to host your own game.
+                    Enter your name and a 4-letter room code to join friends. If you close your browser, you can rejoin the same room by simply re-entering your name.
                   </p>
                 </div>
               </div>
@@ -114,9 +114,9 @@ export default function HelpModal() {
                   <Sparkles size={24} color="var(--secondary)" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Wait for Players</h3>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '4px' }}>Lobby & Management</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.4' }}>
-                    Once in the lobby, wait for your friends to join using your unique room code.
+                    Any player can start the game! The <strong>Host</strong> (marked with a crown) can also rename or remove participants from the lobby to keep the game fair.
                   </p>
                 </div>
               </div>
